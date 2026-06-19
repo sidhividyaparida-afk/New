@@ -1,21 +1,24 @@
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Depends, Header, HTTPException
 
 app = FastAPI()
+# Reusable dependency
+def get_current_user():
+    return {"username": "testuser"}
 
-class UserNotFoundException(Exception):
-    def __init__(self, name:str):
-        self.name  = name
+@app.get("/users")
+def users(user = Depends(get_current_user)):
+    return {"user": user}
 
-@app.exception_handler(UserNotFoundException)
-def user_not_found_exception_handler(request: Request, exc: UserNotFoundException):
-    return JSONResponse(
-        status_code=404,
-        content={"message": f"User '{exc.name}' not found."},
-    )
+@app.get("/items")
+def items(user = Depends(get_current_user)):
+    return {"items": ["item1", "item2"], "user": user}
 
-@app.get("/user/{name}")
-def get_user(name: str):
-    if name != "Casper":
-        raise UserNotFoundException(name)
-    return {"name": name, "message": "User found!"}
+# Authentication
+def get_token_header(token: str = Header(None)):
+    if token != "fake-super-secret-token":
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return {"token": token, "User": "Apple"}
+
+@app.get("/secure-data")
+def secure_data(token_data = Depends(get_token_header)):
+    return {"secure_data": "This is protected data", "token_data": token_data}
