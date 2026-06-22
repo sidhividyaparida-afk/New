@@ -1,15 +1,22 @@
+import sqlite3
 from fastapi import FastAPI
-from pydantic import BaseModel
 
 app = FastAPI()
 
-class User(BaseModel):
-    name: str
-    age: int
+connection = sqlite3.connect("database.db", check_same_thread=False)
+cursor = connection.cursor()
 
-@app.post("/new user")
-def new_user(user: User):
-    return{
-        "message": "User created successfully",
-        "data": user
-         }
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS todo(
+    id INTEGER PRIMARY KEY ,
+    title TEXT,
+    completed BOOLEAN DEFAULT FALSE
+    )
+""")
+
+connection.commit()
+
+@app.get("/")
+def home():
+    return {"message": "Welcome to the Todo API!"
+    "SQLite connected successfully."}
